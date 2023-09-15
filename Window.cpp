@@ -1,0 +1,349 @@
+////////////////////////////////////////
+// Window.cpp
+////////////////////////////////////////
+
+#include "Window.h"
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Window Properties
+int Window::width;
+int Window::height;
+const char* Window::windowTitle = "CSE 169 Starter";
+
+int Window::mode = 2;
+bool Window::started = false;
+time_t Window::startTime;
+glm::vec3 Window::wind = glm::vec3(0);
+int Window::windVec = 3;
+
+Cloth* Window::cloth;
+
+// Camera Properties
+Camera* Window::Cam;
+
+// Interaction Variables
+bool Window::LeftDown;
+bool Window::RightDown;
+int Window::MouseX;
+int Window::MouseY;
+
+// The shader program id
+GLuint Window::shaderProgram;
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Constructors and desctructors 
+bool Window::initializeProgram() {
+
+	// Create a shader program with a vertex shader and a fragment shader.
+	shaderProgram = LoadShaders("shaders/shader.vert", "shaders/shader.frag");
+
+	// Check the shader program.
+	if (!shaderProgram)
+	{
+		std::cerr << "Failed to initialize shader program" << std::endl;
+		return false;
+	}
+
+
+
+	return true;
+}
+
+//bool Window::initializeObjects(char * file, char * file1, char* file2)
+bool Window::initializeObjects()
+{
+	cloth = new Cloth(30);
+
+	return true;
+}
+
+void Window::cleanUp()
+{
+	// Deallcoate the objects.
+	//delete cube;
+
+	// Delete the shader program.
+	glDeleteProgram(shaderProgram);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// for the Window
+GLFWwindow* Window::createWindow(int width, int height)
+{
+	// Initialize GLFW.
+	if (!glfwInit())
+	{
+		std::cerr << "Failed to initialize GLFW" << std::endl;
+		return NULL;
+	}
+
+	// 4x antialiasing.
+	glfwWindowHint(GLFW_SAMPLES, 4);
+
+#ifdef __APPLE__ 
+	// Apple implements its own version of OpenGL and requires special treatments
+	// to make it uses modern OpenGL.
+
+	// Ensure that minimum OpenGL version is 3.3
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	// Enable forward compatibility and allow a modern OpenGL context
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+
+	// Create the GLFW window.
+	GLFWwindow* window = glfwCreateWindow(width, height, windowTitle, NULL, NULL);
+
+	// Check if the window could not be created.
+	if (!window)
+	{
+		std::cerr << "Failed to open GLFW window." << std::endl;
+		glfwTerminate();
+		return NULL;
+	}
+
+	// Make the context of the window.
+	glfwMakeContextCurrent(window);
+
+#ifndef __APPLE__
+	// On Windows and Linux, we need GLEW to provide modern OpenGL functionality.
+
+	// Initialize GLEW.
+	if (glewInit())
+	{
+		std::cerr << "Failed to initialize GLEW" << std::endl;
+		return NULL;
+	}
+#endif
+
+	// Set swap interval to 1.
+	glfwSwapInterval(0);
+
+	// set up the camera
+	Cam = new Camera();
+	Cam->SetAspect(float(width) / float(height));
+
+	// initialize the interaction variables
+	LeftDown = RightDown = false;
+	MouseX = MouseY = 0;
+
+	// Call the resize callback to make sure things get drawn immediately.
+	Window::resizeCallback(window, width, height);
+
+	return window;
+}
+
+void Window::resizeCallback(GLFWwindow* window, int width, int height)
+{
+#ifdef __APPLE__
+	// In case your Mac has a retina display.
+	glfwGetFramebufferSize(window, &width, &height); 
+#endif
+	Window::width = width;
+	Window::height = height;
+	// Set the viewport size.
+	glViewport(0, 0, width, height);
+
+	Cam->SetAspect(float(width) / float(height));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// update and draw functions
+void Window::idleCallback()
+{
+	// Perform any updates as necessary. 
+	Cam->Update();
+
+	//cube->update();
+}
+
+void Window::displayCallback(GLFWwindow* window)
+{	
+	if (!started) {
+		startTime = clock();
+		started = true;
+	}
+
+	// Clear the color and depth buffers.
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
+
+	// Render the object.
+	//cube->draw(Cam->GetViewProjectMtx(), Window::shaderProgram);
+	//skel->draw(Cam->GetViewProjectMtx(), Window::shaderProgram);
+	//skin->update();
+	//skin->draw(Cam->GetViewProjectMtx(), Window::shaderProgram);
+
+	/*if (mode == 0) {
+		skel->draw(Cam->GetViewProjectMtx(), Window::shaderProgram);
+		skin->draw(Cam->GetViewProjectMtx(), Window::shaderProgram);
+	}
+	else if (mode == 1) {
+		skin->draw(Cam->GetViewProjectMtx(), Window::shaderProgram);
+	}
+	else {
+		skel->draw(Cam->GetViewProjectMtx(), Window::shaderProgram);
+	}*/
+
+	//float timeDiff = (float)(clock() - startTime) / CLOCKS_PER_SEC / 2;
+	//cout << timeDiff << endl;
+	//vector<float> poses(skel->jointList.size() * 3 + 3);
+	//anim->evaluate(timeDiff, &poses);
+	//skel->animate(poses);
+	//skin->update();
+
+	//skel->draw(Cam->GetViewProjectMtx(), Window::shaderProgram);
+	//skin->draw(Cam->GetViewProjectMtx(), Window::shaderProgram);
+
+	// Gets events, including input such as keyboard and mouse or window resizing.
+
+	//cube->draw(glm::mat4(1),Cam->GetViewProjectMtx(), Window::shaderProgram);
+
+	time_t currTime = clock();
+	float timeDiff = (float)(currTime - startTime) / CLOCKS_PER_SEC / 2;
+	startTime = currTime;
+	cloth->compute(wind);
+	//cloth->compute(glm::vec3(0.f, 0.f, 0.f));
+	cloth->draw(Cam->GetViewProjectMtx(), Window::shaderProgram);
+	//cout << timeDiff << endl;
+
+	glfwPollEvents();
+	// Swap buffers.
+	glfwSwapBuffers(window);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// helper to reset the camera
+void Window::resetCamera() 
+{
+	Cam->Reset();
+	Cam->SetAspect(float(Window::width) / float(Window::height));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// callbacks - for Interaction 
+void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	/*
+	 * TODO: Modify below to add your key callbacks.
+	 */
+	
+	// Check for a key press.
+	if (action == GLFW_PRESS)
+	{
+		if (mode == 1) // if there is only skin
+			return;
+		switch (key) 
+		{
+		case GLFW_KEY_ESCAPE:
+			// Close the window. This causes the program to also terminate.
+			glfwSetWindowShouldClose(window, GL_TRUE);				
+			break;
+
+		case GLFW_KEY_W:
+			cloth->move(glm::vec3(0.f, 0.f, -0.1f));
+			break;
+		case GLFW_KEY_S:
+			cloth->move(glm::vec3(0.f, 0.f, 0.1f));
+			break;
+		case GLFW_KEY_A:
+			cloth->move(glm::vec3(-0.1f, 0.f, 0.f));
+			break;
+		case GLFW_KEY_D:
+			cloth->move(glm::vec3(0.1f, 0.f, 0.f));
+			break;
+		case GLFW_KEY_R:
+			cout << "Moving up" << endl;
+			cloth->move(glm::vec3(0.f, 0.1f, 0.f));
+			break;
+		case GLFW_KEY_F:
+			cloth->move(glm::vec3(0.f, -0.1f, 0.f));
+			break;
+
+
+		case GLFW_KEY_1:
+			cout << "control wind x vec" << endl;
+			windVec = 1;
+			break;
+
+		case GLFW_KEY_2:
+			cout << "control wind y vec" << endl;
+			windVec = 2;
+			break;
+
+		case GLFW_KEY_3:
+			cout << "control wind z vec" << endl;
+			windVec = 3;;
+			break;
+
+		case GLFW_KEY_UP:
+			adjustWind(1);
+			break;
+
+		case GLFW_KEY_DOWN:
+			adjustWind(-1);
+			break;
+
+		default:
+			break;
+		}
+		//if(mode == 0)
+			//skin->update();
+	}
+}
+
+void Window::adjustWind(int m) {
+	float mod = (m > 0) ? 1.0f : -1.0f;
+	glm::vec3 w;
+	if (windVec == 1)
+		w = glm::vec3(0.2f, 0.0f, 0.0f);
+	if (windVec == 2)
+		w = glm::vec3(0.0f, 0.2f, 0.0f);
+	if (windVec == 3)
+		w = glm::vec3(0.0f, 0.0f, 0.2f);
+	wind += mod * w;
+}
+
+void Window::mouse_callback(GLFWwindow* window, int button, int action, int mods)
+{
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		LeftDown = (action == GLFW_PRESS);
+	}
+	if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+		RightDown = (action == GLFW_PRESS);
+	}
+}
+
+void Window::cursor_callback(GLFWwindow* window, double currX, double currY) {
+
+	int maxDelta = 100;
+	int dx = glm::clamp((int)currX - MouseX, -maxDelta, maxDelta);
+	int dy = glm::clamp(-((int)currY - MouseY), -maxDelta, maxDelta);
+
+	MouseX = (int)currX;
+	MouseY = (int)currY;
+
+	// Move camera
+	// NOTE: this should really be part of Camera::Update()
+	if (LeftDown) {
+		const float rate = 1.0f;
+		Cam->SetAzimuth(Cam->GetAzimuth() + dx * rate);
+		Cam->SetIncline(glm::clamp(Cam->GetIncline() - dy * rate, -90.0f, 90.0f));
+	}
+	if (RightDown) {
+		const float rate = 0.005f;
+		float dist = glm::clamp(Cam->GetDistance() * (1.0f - dx * rate), 0.01f, 1000.0f);
+		Cam->SetDistance(dist);
+	}
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
